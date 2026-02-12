@@ -1,0 +1,41 @@
+name: Build & Release DMG
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app
+        run: |
+          set -e
+          APP="VoiceClip.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp Info.plist "$APP/Contents/"
+          
+          swiftc VoiceClip.swift \
+            -parse-as-library \
+            -o "$APP/Contents/MacOS/VoiceClip" \
+            -framework Cocoa \
+            -framework AVFoundation \
+            -framework Carbon \
+            -target arm64-apple-macos13.0
+
+      - name: Create DMG
+        run: |
+          mkdir -p dmg_contents
+          cp -R VoiceClip.app dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+          hdiutil create -volname "VoiceClip" -srcfolder dmg_contents \
+            -ov -format UDZO VoiceClip.dmg
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: VoiceClip.dmg
+          generate_release_notes: true
