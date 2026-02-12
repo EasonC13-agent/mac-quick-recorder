@@ -1,3 +1,5 @@
 VoiceClip.app/
 *.dmg
 .DS_Store
+icon.iconset/
+icon.png
